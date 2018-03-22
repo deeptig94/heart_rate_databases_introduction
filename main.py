@@ -3,17 +3,22 @@ import models
 import datetime
 from pymodm.errors import DoesNotExist
 from flask import Flask, jsonify, request
+
 app = Flask(__name__)
 connect("mongodb://localhost:27017/bme590")  # connect to database
 
 
 @app.route('/heart_rate', methods=['POST'])
 def add_data():
+    r = request.get_json()
+    email = r["user_email"]
+    age = r["user_age"]
+    heart_rate = r["heart_rate"]
     try:
-        add_heart_rate()
+        add_heart_rate(email, heart_rate, datetime.datetime.now())
         x = print("updated user information"), True
     except DoesNotExist:
-        create_user()
+        create_user(email, age, heart_rate)
         x = print("created new user"), False
     return x
 
