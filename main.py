@@ -3,31 +3,59 @@ import models
 import datetime
 from pymodm.errors import DoesNotExist
 from flask import Flask, jsonify, request
+import numpy as np
+import datetime
 
 app = Flask(__name__)
 connect("mongodb://localhost:27017/bme590")  # connect to database
 
 
-@app.route('/heart_rate', methods=['POST'])
+@app.route('/api/heart_rate/', methods=['POST'])
 def add_data():
     r = request.get_json()
     email = r["user_email"]
     age = r["user_age"]
     heart_rate = r["heart_rate"]
     try:
-        add_heart_rate(email, heart_rate, datetime.datetime.now())
+        add_heart_rate(email, heart_rate, datetime.datetime.now())  # add data to existing user
         x = print("updated user information"), True
     except DoesNotExist:
-        create_user(email, age, heart_rate)
+        create_user(email, age, heart_rate, datetime.datetime.now())  # if user does not exist, create new user
         x = print("created new user"), False
     return x
 
 
-@app.route('/heart_rate/<user_email>', methods=['GET'])
+@app.route('/api/heart_rate/<user_email>', methods=['GET'])
 def get_data(user_email):
     user = models.User.objects.raw({'_id': user_email}).first()
-    data_list = user.heart_rate
-    return jsonify({'heart_rate': data_list})
+    heart_data = user.heart_rate
+    return jsonify({'heart_rate': heart_data})
+
+
+@app.route('/api/heart_rate/average/<user_email>', methods=['GET'])
+def get_average(user_email):
+    user = models.User.objects.raw({'_id': user_email}).first()
+    heart_data = user.heart_rate
+    average = average_calc(heart_data)
+    return jsonify({'average_heart_rate': average})
+
+
+@app.route('/api/heart_rate/interval_average', methods=['GET'])
+def get_interval_average(user_email):
+    r = request.get_json()
+    email = r["user_email"]
+    heart_rate = r["heart_rate"]
+    user = models.User.objects.raw({"_id": user_email}).first()
+    heart_data = user.heart_rate
+    heart_time = user.heart_rate_times
+
+
+def average_calc(heart_data):
+    return np.mean(heart_data)
+
+
+def date_interval(dates, interval_start):
+
 
 
 def add_heart_rate(email, heart_rate, time):
@@ -37,10 +65,10 @@ def add_heart_rate(email, heart_rate, time):
     user.save()  # save the user to the database
 
 
-def create_user(email, age, heart_rate):
+def create_user(email, age, heart_rate,time):
     u = models.User(email, age, [], [])  # create a new User instance
     u.heart_rate.append(heart_rate)  # add initial heart rate
-    u.heart_rate_times.append(datetime.datetime.now()) # add initial heart rate time
+    u.heart_rate_times.append(time)  # add initial heart rate time
     u.save()  # save the user to the database
 
 
