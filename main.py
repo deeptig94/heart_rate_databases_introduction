@@ -1,6 +1,5 @@
 from pymodm import connect, MongoModel, fields
 import models
-import datetime
 from pymodm.errors import DoesNotExist
 from flask import Flask, jsonify, request
 import numpy as np
@@ -38,7 +37,8 @@ def get_data(user_email):
 
     user = models.User.objects.raw({'_id': user_email}).first()
     heart_data = user.heart_rate
-    return jsonify({'heart_rate': heart_data})
+    print("This user does not exist")
+    return jsonify({'heart_rate': heart_data}), 200
 
 
 @app.route('/api/heart_rate/average/<user_email>', methods=['GET'])
@@ -66,12 +66,13 @@ def get_interval_average():
 
     email = r["user_email"]
     interval_start = r["heart_rate_average_since"]
+    age = r["user_age"]
 
     user = models.User.objects.raw({"_id": email}).first()
     heart_data = user.heart_rate
     heart_time = user.heart_rate_times
     interval_average = interval_average_calc(heart_time, heart_data, interval_start)
-    return jsonify({'heart_rate_average_since': interval_average})
+    return jsonify({'heart_rate_average_since': interval_average, 'tachycardia': tachy_check(interval_average, age)})
 
 
 def add_heart_rate(email, heart_rate, time):
@@ -135,6 +136,30 @@ def interval_average_calc(h_time, h_data, interval_start):
         if time > start:
             interval.append(h_data[i])
     return np.mean(interval)
+
+
+def tachy_check(heart_rate, age):
+    """ Returns true if user has tachycardia and false if the user does not have tachycardia
+        :param heart_rate: Heart rate of the user
+        :param age: Age of the user """
+
+    if age <= 1 and heart_rate >= 159:
+        return True
+    elif age <= 2 and heart_rate >= 151:
+        return True
+    elif age <= 4 and heart_rate >= 137:
+        return True
+    elif age <= 7 and heart_rate >= 133:
+        return True
+    elif age <= 11 and heart_rate >= 130:
+        return True
+    elif age <= 15 and heart_rate >= 119:
+        return True
+    elif heart_rate >= 100:
+        return True
+
+    else:
+        return False
 
 
 if __name__ == "__main__":
