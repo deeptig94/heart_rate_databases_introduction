@@ -143,6 +143,9 @@ def tachy_check(heart_rate, age):
         :param heart_rate: Heart rate of the user
         :param age: Age of the user """
 
+    age = int(age)
+    heart_rate = int(heart_rate)
+
     if age <= 1 and heart_rate >= 159:
         return True
     elif age <= 2 and heart_rate >= 151:
