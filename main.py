@@ -35,10 +35,13 @@ def get_data(user_email):
         :param user_email: email address of user corresponding to heart rate
         :returns heart_data: A json string of the user's heart rates """
 
-    user = models.User.objects.raw({'_id': user_email}).first()
-    heart_data = user.heart_rate
-    print("This user does not exist")
-    return jsonify({'heart_rate': heart_data}), 200
+    try:
+        user = models.User.objects.raw({'_id': user_email}).first()
+        heart_data = user.heart_rate
+        print("This user does not exist")
+        return jsonify({'heart_rate': heart_data}), 200
+    except DoesNotExist:
+        return 400
 
 
 @app.route('/api/heart_rate/average/<user_email>', methods=['GET'])
@@ -48,10 +51,13 @@ def get_average(user_email):
         :param: user_email: email address of user corresponding to heart rate
         :returns average: A json string of the user's average heart rate """
 
-    user = models.User.objects.raw({'_id': user_email}).first()
-    heart_data = user.heart_rate
-    average = average_calc(heart_data)
-    return jsonify({'average_heart_rate': average})
+    try:
+        user = models.User.objects.raw({'_id': user_email}).first()
+        heart_data = user.heart_rate
+        average = average_calc(heart_data)
+        return jsonify({'average_heart_rate': average})
+    except DoesNotExist:
+        return 400
 
 
 @app.route('/api/heart_rate/interval_average', methods=['POST'])
@@ -68,11 +74,14 @@ def get_interval_average():
     interval_start = r["heart_rate_average_since"]
     age = r["user_age"]
 
-    user = models.User.objects.raw({"_id": email}).first()
-    heart_data = user.heart_rate
-    heart_time = user.heart_rate_times
-    interval_average = interval_average_calc(heart_time, heart_data, interval_start)
-    return jsonify({'heart_rate_average_since': interval_average, 'tachycardia': tachy_check(interval_average, age)})
+    try:
+        user = models.User.objects.raw({"_id": email}).first()
+        heart_data = user.heart_rate
+        heart_time = user.heart_rate_times
+        interval_average = interval_average_calc(heart_time, heart_data, interval_start)
+        return jsonify({'heart_rate_average_since': interval_average, 'tachycardia': tachy_check(interval_average, age)})
+    except DoesNotExist:
+        return 400
 
 
 def add_heart_rate(email, heart_rate, time):
