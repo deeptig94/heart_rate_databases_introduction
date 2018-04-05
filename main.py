@@ -4,8 +4,10 @@ from pymodm.errors import DoesNotExist
 from flask import Flask, jsonify, request
 import numpy as np
 import datetime
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 connect("mongodb://localhost:27017/bme590")  # connect to database
 
 
